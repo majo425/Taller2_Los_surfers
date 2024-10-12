@@ -11,32 +11,57 @@
         android:id="@+id/btnContactos"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:scaleType="fitCenter"
+        android:layout_marginStart="133dp"
+        android:layout_marginTop="84dp"
+        android:layout_marginEnd="134dp"
+        android:layout_marginBottom="24dp"
         android:adjustViewBounds="true"
         android:background="@android:color/transparent"
-        app:srcCompat="@drawable/contacts"
-        tools:layout_editor_absoluteX="105dp"
-        tools:layout_editor_absoluteY="43dp" />
+        android:scaleType="fitCenter"
+
+        app:layout_constraintBottom_toTopOf="@+id/btnCamara"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+
+        app:srcCompat="@drawable/contacts" />
 
     <ImageButton
         android:id="@+id/btnCamara"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        app:srcCompat="@drawable/camera"
-        android:scaleType="fitCenter"
+        android:layout_marginStart="133dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="134dp"
+        android:layout_marginBottom="24dp"
         android:adjustViewBounds="true"
         android:background="@android:color/transparent"
-        tools:layout_editor_absoluteX="105dp"
-        tools:layout_editor_absoluteY="265dp" />
+        android:scaleType="fitCenter"
+
+        app:layout_constraintBottom_toTopOf="@+id/btnMapas"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnContactos"
+        app:layout_constraintVertical_bias="0.0"
+
+        app:srcCompat="@drawable/camera" />
 
     <ImageButton
         android:id="@+id/btnMapas"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:scaleType="fitCenter"
+        android:layout_marginStart="133dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="134dp"
+        android:layout_marginBottom="84dp"
         android:adjustViewBounds="true"
         android:background="@android:color/transparent"
-        app:srcCompat="@drawable/osmap"
-        tools:layout_editor_absoluteX="105dp"
-        tools:layout_editor_absoluteY="492dp" />
+        android:scaleType="fitCenter"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnCamara"
+
+        app:srcCompat="@drawable/osmap" />
 </androidx.constraintlayout.widget.ConstraintLayout>
