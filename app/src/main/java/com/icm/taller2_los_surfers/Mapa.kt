@@ -210,6 +210,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback {
                 mMap.clear()
                 mMap.addMarker(MarkerOptions().position(posicion).title("Nueva ubicación"))
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posicion, 15F))
+                Log.d("MAPS", "Guardando ubicación...")
                 guardarUbicacion(location)
                 ultimaLocacion = location
             }
@@ -222,8 +223,28 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback {
             "longitude" to location.longitude,
             "timestamp" to System.currentTimeMillis()
         )
-        val archivo = File(applicationContext.filesDir, "assets/locaciones.json")
-        archivo.appendText(JSONObject(data).toString()+"\n")
+
+        // Crear la ruta del archivo en el almacenamiento interno
+        val archivo = File(applicationContext.filesDir, "locaciones.json")
+
+        // Si el archivo no existe, créalo primero
+        if (!archivo.exists()) {
+            try {
+                archivo.createNewFile()
+                Log.d("MAPS", "Archivo creado: ${archivo.absolutePath}") // Log para verificar la ruta
+            } catch (e: IOException) {
+                Log.e("MAPS", "Error al crear el archivo", e)
+                return
+            }
+        }
+
+        try {
+            // Agregar datos al archivo
+            archivo.appendText(JSONObject(data).toString() + "\n")
+            Log.d("MAPS", "Ubicación guardada: ${data}") // Registro para depuración
+        } catch (e: IOException) {
+            Log.e("MAPS", "Error al guardar la ubicación", e) // Manejo de errores
+        }
     }
 
     private fun buscarDireccion(direccion: String){
@@ -297,5 +318,4 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback {
             true // Ya tiene permisos
         }
     }
-
 }
