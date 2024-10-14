@@ -236,7 +236,15 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback {
                 val posicion = LatLng(addressResult.latitude, addressResult.longitude)
                 mMap.addMarker(MarkerOptions().position(posicion).title(direccion))
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posicion, 15F))
-            }else{
+
+                // Calcular y mostrar la distancia
+                if (ultimaLocacion != null) {
+                    val distancia = calcularDistancia(posicion)
+                    Toast.makeText(this, "Distancia: $distancia metros", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Ubicación actual no disponible", Toast.LENGTH_SHORT).show()
+                }
+            } else {
                 Toast.makeText(this, "Dirección no encontrada", Toast.LENGTH_SHORT).show()
             }
         } catch (e: IOException) {
@@ -245,17 +253,29 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+
     private fun marcarPosicion(latLng: LatLng) {
         try {
             val addresses: List<Address>? = mGeocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
             val direccion = addresses?.firstOrNull()?.getAddressLine(0) ?: "Sin dirección"
             mMap.addMarker(MarkerOptions().position(latLng).title(direccion))
-            Toast.makeText(this, "Distancia: ${calcularDistancia(latLng)} metros", Toast.LENGTH_SHORT).show()
+
+            // Mover la cámara al marcador creado
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15F))
+
+            // Mostrar distancia
+            if (ultimaLocacion != null) {
+                val distancia = calcularDistancia(latLng)
+                Toast.makeText(this, "Distancia: $distancia metros", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Ubicación actual no disponible", Toast.LENGTH_SHORT).show()
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             Toast.makeText(this, "Error al obtener la dirección", Toast.LENGTH_SHORT).show()
         }
     }
+
 
 
     private fun calcularDistancia(destino:LatLng): Float {
