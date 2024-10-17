@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.Manifest
 import android.widget.ImageButton
+import androidx.core.content.ContextCompat.startActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,6 +29,10 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<ImageButton>(R.id.btnMapas).setOnClickListener {
             requestLocationPermission()
+        }
+        findViewById<ImageButton>(R.id.btnCamara).setOnClickListener {
+            val intent = Intent(this, Camera::class.java)
+            startActivity(intent)
         }
     }
 
