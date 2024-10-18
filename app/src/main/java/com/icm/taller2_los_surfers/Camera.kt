@@ -11,6 +11,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import android.Manifest
+import android.content.ContentValues
+import android.media.ExifInterface
+import android.os.Environment
+import android.provider.MediaStore
+import android.util.Log
 import java.io.File
 
 class Camera : AppCompatActivity() {
@@ -24,7 +30,10 @@ class Camera : AppCompatActivity() {
     private val cameraContract =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success) {
-                imgPreview.setImageURI(imageUrl) // Mostrar la imagen después de tomarla
+                imgPreview.setImageURI(null)
+                imgPreview.setImageURI(imageUrl)
+                saveImageToGallery(imageUrl)
+                checkImageResolutionUsingExif(imageUrl)
             } else {
                 Toast.makeText(this, "No se pudo tomar la foto", Toast.LENGTH_SHORT).show()
             }
@@ -33,7 +42,7 @@ class Camera : AppCompatActivity() {
     private val galleryContract =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
-                imgPreview.setImageURI(it) // Mostrar la imagen seleccionada de la galería
+                imgPreview.setImageURI(it)
             }
         }
 
@@ -53,7 +62,8 @@ class Camera : AppCompatActivity() {
                 )
             ) {
                 if (hasCameraHardware()) {
-                    cameraContract.launch(imageUrl) // Lanzar el contrato de la cámara
+                    imageUrl = createImageUri()
+                    cameraContract.launch(imageUrl)
                 } else {
                     Toast.makeText(this, "No se encontró hardware de cámara.", Toast.LENGTH_SHORT)
                         .show()
@@ -62,8 +72,9 @@ class Camera : AppCompatActivity() {
         }
 
         btnAbrirGaleria.setOnClickListener {
-            openGallery() // No se necesita verificar permisos en Android 11 o superior
+            openGallery()
         }
+
     }
 
     private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int): Boolean {
@@ -75,13 +86,20 @@ class Camera : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, permissionsToRequest, requestCode)
             false
         } else {
-            true // Los permisos ya están concedidos
+            true
         }
     }
 
     private fun openGallery() {
-        galleryContract.launch("image/*") // Lanzar el contrato de la galería
+        if (checkAndRequestPermissions(
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                GALLERY_REQUEST_CODE
+            )
+        ) {
+            galleryContract.launch("image/*")
+        }
     }
+
 
     private fun createImageUri(): Uri {
         val image = File(filesDir, FILE_NAME)
@@ -89,15 +107,80 @@ class Camera : AppCompatActivity() {
             this,
             "com.icm.taller2_los_surfers.fileprovider",
             image
-        ) // Crear URI para la imagen
+        )
     }
 
     private fun hasCameraHardware(): Boolean {
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) // Comprobar si hay hardware de cámara
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    }
+
+    private fun saveImageToGallery(uri: Uri) {
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "IMG_${System.currentTimeMillis()}.jpg")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+        }
+        val resolver = contentResolver
+        val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        resolver.openOutputStream(imageUri!!).use { outputStream ->
+            contentResolver.openInputStream(uri)?.copyTo(outputStream!!)
+        }
+
+        Toast.makeText(this, "Imagen guardada en la galería", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            CAMERA_REQUEST_CODE -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    cameraContract.launch(imageUrl)
+                } else {
+                    Toast.makeText(this, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show()
+                }
+            }
+            GALLERY_REQUEST_CODE -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    galleryContract.launch("image/*")
+                } else {
+                    Toast.makeText(this, "Permiso de galería denegado", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun checkImageResolutionUsingExif(uri: Uri) {
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val exifInterface = inputStream?.let { ExifInterface(it) }
+
+            val width = exifInterface?.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, -1) ?: -1
+            val height = exifInterface?.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, -1) ?: -1
+
+            inputStream?.close()
+
+            Log.d("ExifResolution", "Ancho: $width, Alto: $height")
+
+            if (width >= 1000 && height >= 1000) {
+                Toast.makeText(this, "La resolución de la imagen es óptima", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Resolución de imagen baja", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Error al leer los metadatos de la imagen", Toast.LENGTH_SHORT).show()
+        }
     }
 
     companion object {
         private const val CAMERA_REQUEST_CODE = 10
+        private const val GALLERY_REQUEST_CODE = 11
     }
 }
 
